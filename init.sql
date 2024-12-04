@@ -15,6 +15,7 @@ CREATE TABLE department_table (
 INSERT INTO department_table (department_name) VALUES ('개발팀');
 INSERT INTO department_table (department_name) VALUES ('마케팅팀');
 INSERT INTO department_table (department_name) VALUES ('인사팀');
+INSERT INTO department_table (department_name) VALUES ('영업팀');
 
 INSERT INTO example_table (name, email, age, department_id) VALUES ('박성현', 'sung hyun@example.com', 30, 1);
 INSERT INTO example_table (name, email, age, department_id) VALUES ('김영훈', 'young hoon@example.com', 28, 2);
