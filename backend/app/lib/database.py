@@ -49,10 +49,14 @@ def configure_sqlalchemy(
     options = {
         "echo": False,
         "json_serializer": lambda data: json_dumps(data, indent=None),
+        "connect_args": {
+            "charset": "utf8mb4",
+            "use_unicode": True,
+        }
     }
     if engine_options:
         options.update(engine_options)
-    engine = create_engine(connection_uri, **engine_options or {})
+    engine = create_engine(connection_uri, **options)
     SessionMaker = scoped_session(
         sessionmaker(
             bind=engine,

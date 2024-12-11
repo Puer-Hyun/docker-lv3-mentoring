@@ -1,5 +1,5 @@
 """
-ORM for candidates table
+ORM for page_contents table
 """
 
 from functools import cached_property
