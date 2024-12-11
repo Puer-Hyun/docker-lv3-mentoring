@@ -1,19 +1,37 @@
-version: '3.8'
 services:
   db:
-    build: .
-    container_name: my-mysql-container
+    build:
+      context: .
+      dockerfile: Dockerfile.database
+    container_name: mysql-container
     restart: always
+    env_file: 
+      - .env    # env_file 추가
     environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_DATABASE=${MYSQL_DATABASE}
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
     ports:
       - "127.0.0.1:3306:3306"
     volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ${PWD}/init.sql:/docker-entrypoint-initdb.d/init.sql
       - mysql_data:/var/lib/mysql
+  backend:
+    build: 
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: backend-container
+    restart: always
+    volumes:
+      - ${FASTAPI_WORKSPACE_DIR}:/workspace
+    depends_on:
+      - db
+    tty: true           # 추가: 터미널 할당
+    stdin_open: true    # 추가: 표준 입력 유지
+    command: /bin/bash  # 추가: 기본 실행 명령어
+    ports:
+      - "8000:8000"     # 추가: FastAPI 서버용 포트
 
 volumes:
   mysql_data:
