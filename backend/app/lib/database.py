@@ -1,4 +1,13 @@
-"""libs for database."""
+"""Database utilities and SQLAlchemy configuration module.
+
+This module provides utilities for database connection management and session handling
+using SQLAlchemy. It includes functions for configuring the database engine,
+session management, and transaction handling.
+
+Globals:
+    engine (Optional[Engine]): SQLAlchemy engine instance
+    SessionMaker (Optional[scoped_session]): SQLAlchemy scoped session maker
+"""
 
 from contextlib import contextmanager
 from functools import wraps
@@ -20,7 +29,18 @@ def configure_sqlalchemy(
     connection_uri: str,
     engine_options: Optional[dict] = None,
 ):
-    """Configure SQLAlchemy engine and scoped session."""
+    """Configure SQLAlchemy engine and create a scoped session factory.
+
+    Args:
+        connection_uri (str): Database connection URI
+        engine_options (Optional[dict]): Additional options for SQLAlchemy engine
+
+    Returns:
+        None
+
+    Note:
+        This function is idempotent - if engine is already configured, it will return early.
+    """
     global engine, SessionMaker
 
     if engine:
@@ -43,7 +63,14 @@ def configure_sqlalchemy(
 
 
 def get_engine() -> Engine:
-    """Return SQLAlchemy engine."""
+    """Return the configured SQLAlchemy engine instance.
+
+    Returns:
+        Engine: The configured SQLAlchemy engine
+
+    Raises:
+        Exception: If SQLAlchemy engine is not configured
+    """
     global engine
     if not engine:
         raise Exception("SQLAlchemy engine is not configured.")
@@ -51,7 +78,14 @@ def get_engine() -> Engine:
 
 
 def get_session_maker() -> scoped_session:
-    """Return SQLAlchemy session maker."""
+    """Return the configured SQLAlchemy scoped session maker.
+
+    Returns:
+        scoped_session: The configured session maker
+
+    Raises:
+        Exception: If SQLAlchemy session maker is not configured
+    """
     global SessionMaker
     if not SessionMaker:
         raise Exception("SQLAlchemy session maker is not configured.")
@@ -60,10 +94,20 @@ def get_session_maker() -> scoped_session:
 
 @contextmanager
 def session_scope():
-    """
-    Provide a transactional scope around a series of operations.
-    with session_scope() as session:
-        session.query(...)
+    """Provide a transactional scope around a series of operations.
+
+    This context manager handles the session lifecycle including commit,
+    rollback in case of exceptions, and cleanup.
+
+    Yields:
+        Session: SQLAlchemy session object
+
+    Raises:
+        Exception: Any exception that occurs during the transaction
+
+    Example:
+        with session_scope() as session:
+            session.query(Model).filter(Model.id == 1).first()
     """
     global SessionMaker
     session = SessionMaker()
@@ -78,9 +122,21 @@ def session_scope():
 
 
 def with_session(func):
-    """
-    함수에 session 인자가 있으면 그대로 실행하고,
-    없으면 session_scope()로 session을 생성해서 실행한다.
+    """Handle session management for database operations.
+
+    If a session is provided in the function arguments, uses that session.
+    Otherwise, creates a new session using session_scope().
+
+    Args:
+        func: The function to wrap
+
+    Returns:
+        callable: Wrapped function that handles session management
+
+    Example:
+        @with_session
+        def get_user(user_id: int, session=None):
+            return session.query(User).filter(User.id == user_id).first()
     """
 
     @wraps(func)
