@@ -1,34 +1,8 @@
-FROM ubuntu:22.04
+FROM python:3.10
 
-# 시스템 패키지 업데이트 및 필수 도구 설치
-RUN apt-get update && apt-get install -y \
-    python3.10 \
-    python3.10-venv \
-    python3-pip \
-    mysql-client \
-    default-libmysqlclient-dev \
-    python3.10-dev \
-    pkg-config \
-    gcc \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
+WORKDIR /workspace/fastapi-server
 
-# 작업 디렉토리 생성
-WORKDIR /workspace
-
-# 기본 Python 버전을 3.10으로 설정
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1
-
-# pip 업그레이드
-RUN python -m pip install --upgrade pip
-
-# 가상환경 생성 및 활성화
-RUN python3 -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
-# 필요한 Python 패키지 설치
-RUN pip install fastapi sqlalchemy uvicorn httpx mysqlclient pymysql
-
-# 쉘 진입점 설정
-SHELL ["/bin/bash", "-c"]
+COPY backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+RUN apt-get update && apt-get install -y netcat-openbsd
+ENV PYTHONPATH=/workspace/fastapi-server

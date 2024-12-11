@@ -5,8 +5,8 @@ services:
       dockerfile: Dockerfile.database
     container_name: mysql-container
     restart: always
-    env_file: 
-      - .env    # env_file 추가
+    env_file:
+      - .env
     environment:
       MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
       MYSQL_DATABASE: "${MYSQL_DATABASE}"
@@ -17,21 +17,29 @@ services:
     volumes:
       - ${PWD}/init.sql:/docker-entrypoint-initdb.d/init.sql
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 5s
+      retries: 10
+
   backend:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile.backend
     container_name: backend-container
     restart: always
+    env_file:
+      - .env
     volumes:
-      - ${FASTAPI_WORKSPACE_DIR}:/workspace
+      - ./backend:/workspace/fastapi-server
     depends_on:
-      - db
-    tty: true           # 추가: 터미널 할당
-    stdin_open: true    # 추가: 표준 입력 유지
-    command: /bin/bash  # 추가: 기본 실행 명령어
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE}
     ports:
-      - "8000:8000"     # 추가: FastAPI 서버용 포트
+      - "8000:8000"
+    command: sh /workspace/fastapi-server/scripts/run_fastapi_server
 
 volumes:
   mysql_data:
